@@ -7,6 +7,8 @@ require("dotenv").config({ path: ".env" });
 initialisation();
 
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const app = express();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -24,7 +26,8 @@ app.use(express.json());
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    return cb(null, "./assets");
+    const assetsPath = path.resolve(__dirname, "assets");
+    return cb(null, assetsPath);
   },
 
   filename: function (req, file, cb) {
