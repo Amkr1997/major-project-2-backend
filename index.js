@@ -377,6 +377,31 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
+// Get users with name and userName only.
+app.get("/api/users/username", async (req, res) => {
+  try {
+    const allUsers = await User.find().select("name userName");
+
+    if (!allUsers) {
+      return res
+        .status(404)
+        .json({
+          message: "Failed to fetch all users with userName",
+          success: false,
+        });
+    }
+
+    return res
+      .status(201)
+      .json({ message: "All Users", allUsers, success: true });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+});
+
 // Get a single user
 app.get("/api/users/:userId", async (req, res) => {
   const userId = req.params.userId;
