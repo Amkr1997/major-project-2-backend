@@ -726,31 +726,28 @@ app.get("/api/posts/comments", async (req, res) => {
 // Get all posts with all nested keys populated
 app.get("/allPosts", async (req, res) => {
   try {
-    const allPostWithAllDetails = await Post.find()
+    const populatedPosts = await Post.find()
+      .select("author likes comments")
       .populate({
         path: "author",
-      })
-      .populate({
-        path: "likes",
-        populate: {
-          path: "following follower posts",
-        },
+        select: "name",
       })
       .populate({
         path: "comments",
         populate: {
           path: "author",
+          select: "name",
         },
       });
 
-    if (!allPostWithAllDetails) {
+    if (!populatedPosts) {
       return res
         .status(404)
         .json({ message: "Failed to find all details", success: false });
     } else {
       return res.status(201).json({
         message: "Found post with details",
-        allPostWithAllDetails,
+        populatedPosts,
         success: true,
       });
     }
