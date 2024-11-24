@@ -724,7 +724,7 @@ app.get("/api/posts/comments", async (req, res) => {
 });
 
 // Get all posts with all nested keys populated
-app.get("/api/posts/all", async (req, res) => {
+app.get("/allPosts", async (req, res) => {
   try {
     const allPostWithAllDetails = await Post.find()
       .populate({
