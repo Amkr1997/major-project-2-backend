@@ -727,7 +727,7 @@ app.get("/api/posts/comments", async (req, res) => {
 app.get("/allPosts", async (req, res) => {
   try {
     const populatedPosts = await Post.find()
-      .select("author likes comments")
+      .select("textContent imgContent likes author comments")
       .populate({
         path: "author",
         select: "name",
