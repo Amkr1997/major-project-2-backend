@@ -305,7 +305,7 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
           $addToSet: { likes: userId },
         },
         { new: true }
-      ).select("_id");
+      );
 
       const userWhoLiked = await User.findByIdAndUpdate(
         userId,
@@ -313,7 +313,7 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
           $addToSet: { postsLiked: postId },
         },
         { new: true }
-      ).select("_id name");
+      );
 
       return res.status(201).json({
         message: "Liked post",
@@ -328,14 +328,15 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
           $pull: { likes: userId },
         },
         { new: true }
-      ).select("_id");
+      );
+
       const userWhoDisliked = await User.findByIdAndUpdate(
         userId,
         {
           $pull: { postsLiked: postId },
         },
         { new: true }
-      ).select("_id name");
+      );
 
       return res.status(201).json({
         message: "Disliked post",
