@@ -322,7 +322,7 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
         userWhoLiked,
       });
     } else {
-      const dislikedPostId = await Post.findByIdAndUpdate(
+      const dislikedPost = await Post.findByIdAndUpdate(
         postId,
         {
           $pull: { likes: userId },
@@ -341,7 +341,7 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
       return res.status(201).json({
         message: "Disliked post",
         success: true,
-        dislikedPostId,
+        dislikedPost,
         userWhoDisliked,
       });
     }
@@ -786,7 +786,9 @@ app.get("/api/posts/comments", async (req, res) => {
 app.get("/allPosts", async (req, res) => {
   try {
     const populatedPosts = await Post.find()
-      .select("textContent imgContent likes author comments")
+      .select(
+        "textContent imgContent likes author comments updatedAt createdAt"
+      )
       .populate({
         path: "author",
         select: "name",
