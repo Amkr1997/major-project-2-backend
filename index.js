@@ -297,17 +297,34 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
     const isLiked = foundPost.likes.includes(userId);
 
     if (!isLiked) {
-      await Post.findByIdAndUpdate(postId, { $addToSet: { likes: userId } });
-      await User.findByIdAndUpdate(userId, {
+      const likedPostId = await Post.findByIdAndUpdate(postId, {
+        $addToSet: { likes: userId },
+      }).select("_id");
+
+      const userWhoLiked = await User.findByIdAndUpdate(userId, {
         $addToSet: { postsLiked: postId },
+      }).select("_id name");
+
+      return res.status(201).json({
+        message: "Liked post",
+        success: true,
+        likedPostId,
+        userWhoLiked,
       });
-
-      return res.status(201).json({ message: "Liked post", success: true });
     } else {
-      await Post.findByIdAndUpdate(postId, { $pull: { likes: userId } });
-      await User.findByIdAndUpdate(userId, { $pull: { postsLiked: postId } });
+      const dislikedPostId = await Post.findByIdAndUpdate(postId, {
+        $pull: { likes: userId },
+      }).select("_id");
+      const userWhoDisliked = await User.findByIdAndUpdate(userId, {
+        $pull: { postsLiked: postId },
+      }).select("_id name");
 
-      return res.status(201).json({ message: "Disliked post", success: true });
+      return res.status(201).json({
+        message: "Disliked post",
+        success: true,
+        dislikedPostId,
+        userWhoDisliked,
+      });
     }
   } catch (error) {
     console.log(error);
@@ -383,12 +400,10 @@ app.get("/api/users/username", async (req, res) => {
     const allUsers = await User.find().select("name userName");
 
     if (!allUsers) {
-      return res
-        .status(404)
-        .json({
-          message: "Failed to fetch all users with userName",
-          success: false,
-        });
+      return res.status(404).json({
+        message: "Failed to fetch all users with userName",
+        success: false,
+      });
     }
 
     return res
