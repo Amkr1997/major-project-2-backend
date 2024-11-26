@@ -299,7 +299,7 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
     const isLiked = foundPost.likes.includes(userId);
 
     if (!isLiked) {
-      const likedPostId = await Post.findByIdAndUpdate(
+      const likedPost = await Post.findByIdAndUpdate(
         postId,
         {
           $addToSet: { likes: userId },
@@ -318,7 +318,7 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
       return res.status(201).json({
         message: "Liked post",
         success: true,
-        likedPostId,
+        likedPost,
         userWhoLiked,
       });
     } else {
