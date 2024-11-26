@@ -292,18 +292,28 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
     const foundPost = await Post.findById(postId);
 
     if (!foundPost)
-      return res.json(404).json({ message: "post not found", success: false });
+      return res
+        .status(404)
+        .json({ message: "post not found", success: false });
 
     const isLiked = foundPost.likes.includes(userId);
 
     if (!isLiked) {
-      const likedPostId = await Post.findByIdAndUpdate(postId, {
-        $addToSet: { likes: userId },
-      }).select("_id");
+      const likedPostId = await Post.findByIdAndUpdate(
+        postId,
+        {
+          $addToSet: { likes: userId },
+        },
+        { new: true }
+      ).select("_id");
 
-      const userWhoLiked = await User.findByIdAndUpdate(userId, {
-        $addToSet: { postsLiked: postId },
-      }).select("_id name");
+      const userWhoLiked = await User.findByIdAndUpdate(
+        userId,
+        {
+          $addToSet: { postsLiked: postId },
+        },
+        { new: true }
+      ).select("_id name");
 
       return res.status(201).json({
         message: "Liked post",
@@ -312,12 +322,20 @@ app.post("/api/:userId/like/:postId", async (req, res) => {
         userWhoLiked,
       });
     } else {
-      const dislikedPostId = await Post.findByIdAndUpdate(postId, {
-        $pull: { likes: userId },
-      }).select("_id");
-      const userWhoDisliked = await User.findByIdAndUpdate(userId, {
-        $pull: { postsLiked: postId },
-      }).select("_id name");
+      const dislikedPostId = await Post.findByIdAndUpdate(
+        postId,
+        {
+          $pull: { likes: userId },
+        },
+        { new: true }
+      ).select("_id");
+      const userWhoDisliked = await User.findByIdAndUpdate(
+        userId,
+        {
+          $pull: { postsLiked: postId },
+        },
+        { new: true }
+      ).select("_id name");
 
       return res.status(201).json({
         message: "Disliked post",
