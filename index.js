@@ -26,8 +26,8 @@ app.use(express.json());
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const assetsPath = path.resolve(__dirname, "assets");
-    return cb(null, assetsPath);
+    //const assetsPath = path.resolve(__dirname, "assets");
+    return cb(null, "/tmp");
   },
 
   filename: function (req, file, cb) {
