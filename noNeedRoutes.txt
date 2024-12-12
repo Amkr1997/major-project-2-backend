@@ -1,0 +1,190 @@
+
+// Post a new user.
+app.post("/api/user/users", async (req, res) => {
+  const userData = req.body;
+
+  try {
+    const newUser = new User(userData);
+    const addedUser = await newUser.save();
+
+    if (!addedUser) {
+      return res
+        .status(404)
+        .json({ message: "Failed to add a user", success: false });
+    } else {
+      return res
+        .status(201)
+        .json({ message: "New user added", addedUser, success: true });
+    }
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+});
+
+// Delete a user
+app.delete("/api/user/delete/:userId", async (req, res) => {
+  const dataId = req.params.userId;
+
+  try {
+    const deletedUser = await User.findByIdAndDelete(dataId);
+
+    if (!deletedUser) {
+      return res
+        .status(404)
+        .json({ message: "Failed to delete user", success: false });
+    } else {
+      return res
+        .status(201)
+        .json({ message: "User deleted", deletedUser, success: true });
+    }
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+});
+
+// comments route.
+app.post("/api/:userId/comment/:postId", async (req, res) => {
+  const userId = req.params.userId;
+  const postId = req.params.postId;
+  const commentData = req.body;
+
+  console.log(commentData);
+
+  try {
+    const foundPost = await Post.findById(postId);
+    const foundUser = await User.findById(userId);
+
+    if (!foundPost || !foundUser)
+      return res
+        .status(404)
+        .json({ message: "post or user not found", success: false });
+
+    await Post.findByIdAndUpdate(postId, {
+      $addToSet: { comments: { ...commentData, author: userId } },
+    });
+
+    return res.status(201).json({ message: "comment added successfully" });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+});
+
+// Below routes are temporary as of now.
+// Get all posts with author names
+app.get("/api/posts/author", async (req, res) => {
+  try {
+    const allPostWithAuthor = await Post.find().populate("author");
+
+    if (!allPostWithAuthor) {
+      return res
+        .status(404)
+        .json({ message: "Failed to populate with author", success: false });
+    } else {
+      return res.status(201).json({
+        message: "Found posts with author",
+        allPostWithAuthor,
+        success: true,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+});
+
+// Get all posts with liked users
+app.get("/api/posts/likes", async (req, res) => {
+  try {
+    const allPostWithLikes = await Post.find().populate("likes");
+
+    if (!allPostWithLikes) {
+      return res
+        .status(404)
+        .json({ message: "Failed to populate with author", success: false });
+    }
+
+    return res.status(201).json({
+      message: "Posts with liked authors",
+      allPostWithLikes,
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+});
+
+// Get all posts with comments with users
+app.get("/api/posts/comments", async (req, res) => {
+  try {
+    const allPostWithComments = await Post.find().populate("comments");
+
+    if (!allPostWithComments) {
+      return res
+        .status(404)
+        .json({ message: "Failed to populate with author" });
+    }
+
+    return res.status(201).json({
+      message: "Post with comments",
+      allPostWithComments,
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+});
+
+// Get all posts with all nested keys populated
+app.get("/allPosts", async (req, res) => {
+  try {
+    const populatedPosts = await Post.find()
+      .select(
+        "textContent imgContent likes author comments updatedAt createdAt"
+      )
+      .populate({
+        path: "author",
+        select: "name",
+      })
+      .populate({
+        path: "comments",
+        populate: {
+          path: "author",
+          select: "name",
+        },
+      });
+
+    if (!populatedPosts) {
+      return res
+        .status(404)
+        .json({ message: "Failed to find all details", success: false });
+    } else {
+      return res.status(201).json({
+        message: "Found post with details",
+        populatedPosts,
+        success: true,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false });
+  }
+});

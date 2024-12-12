@@ -26,8 +26,8 @@ app.use(express.json());
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    //const assetsPath = path.resolve(__dirname, "assets");
-    return cb(null, "/tmp");
+    const assetsPath = path.resolve(__dirname, "assets");
+    return cb(null, assetsPath);
   },
 
   filename: function (req, file, cb) {
@@ -91,21 +91,6 @@ app.post(
           success: false,
         });
       }
-
-      /* if (!profileLocalPath) {
-        return res
-          .status(400)
-          .json({ message: "Profile image is required", success: false });
-      }*/
-
-      // profile image object uploaded in cloudinary
-      /* const profileImg = await uploadCloudinary(profileLocalPath);
-
-      if (!profileImg) {
-        return res
-          .status(400)
-          .json({ message: "Profile Image is required", success: false });
-      }*/
 
       // Creating new post
       const newPost = new Post({
@@ -459,32 +444,6 @@ app.get("/api/users/:userId", async (req, res) => {
   }
 });
 
-/*
-// Post a new user.
-app.post("/api/user/users", async (req, res) => {
-  const userData = req.body;
-
-  try {
-    const newUser = new User(userData);
-    const addedUser = await newUser.save();
-
-    if (!addedUser) {
-      return res
-        .status(404)
-        .json({ message: "Failed to add a user", success: false });
-    } else {
-      return res
-        .status(201)
-        .json({ message: "New user added", addedUser, success: true });
-    }
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", success: false });
-  }
-});
-
 // Update a user
 app.post("/api/users/edit/:userId", async (req, res) => {
   const dataId = req.params.userId;
@@ -511,31 +470,6 @@ app.post("/api/users/edit/:userId", async (req, res) => {
       .json({ message: "Internal server error", success: false });
   }
 });
-
-// Delete a user
-app.delete("/api/user/delete/:userId", async (req, res) => {
-  const dataId = req.params.userId;
-
-  try {
-    const deletedUser = await User.findByIdAndDelete(dataId);
-
-    if (!deletedUser) {
-      return res
-        .status(404)
-        .json({ message: "Failed to delete user", success: false });
-    } else {
-      return res
-        .status(201)
-        .json({ message: "User deleted", deletedUser, success: true });
-    }
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", success: false });
-  }
-});
-*/
 
 // follow/following.
 app.post("/api/:userId/follow/:followerId", async (req, res) => {
@@ -584,36 +518,6 @@ app.post("/api/:userId/follow/:followerId", async (req, res) => {
   }
 });
 
-// comments route.
-app.post("/api/:userId/comment/:postId", async (req, res) => {
-  const userId = req.params.userId;
-  const postId = req.params.postId;
-  const commentData = req.body;
-
-  console.log(commentData);
-
-  try {
-    const foundPost = await Post.findById(postId);
-    const foundUser = await User.findById(userId);
-
-    if (!foundPost || !foundUser)
-      return res
-        .status(404)
-        .json({ message: "post or user not found", success: false });
-
-    await Post.findByIdAndUpdate(postId, {
-      $addToSet: { comments: { ...commentData, author: userId } },
-    });
-
-    return res.status(201).json({ message: "comment added successfully" });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", success: false });
-  }
-});
-
 // User registration.
 app.post("/register", async (req, res) => {
   const { name, userName, email, password } = req.body;
@@ -654,9 +558,9 @@ const verifyJWT = (req, res, next) => {
   if (!token) return res.status(401).json({ message: "No token provided" });
 
   try {
-    // console.log(token)
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
     req.user = decodedToken;
+
     next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid Token" });
@@ -685,8 +589,7 @@ app.post("/login", async (req, res) => {
 
     const jwtToken = jwt.sign(
       {
-        userName: loginUser.userName,
-        email: loginUser.email,
+        userId: loginUser._id,
       },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "24h" }
@@ -696,7 +599,6 @@ app.post("/login", async (req, res) => {
       message: "You login successfully",
       success: true,
       jwtToken,
-      loginUser,
     });
   } catch (error) {
     console.log(error);
@@ -706,117 +608,32 @@ app.post("/login", async (req, res) => {
 
 // demo protected route.
 app.get("/demoVerify", verifyJWT, (req, res) => {
-  res.json({ message: "welcome to profile page" });
+  const loginUserId = req.user;
+  res.json({ message: "welcome to profile page", loginUserId });
 });
 
-// Below routes are temporary as of now.
-// Get all posts with author names
-app.get("/api/posts/author", async (req, res) => {
+// fetch data of login user
+app.get("/get/profile/data/:userId", async (req, res) => {
+  const userId = req.params.userId;
+
   try {
-    const allPostWithAuthor = await Post.find().populate("author");
-
-    if (!allPostWithAuthor) {
-      return res
-        .status(404)
-        .json({ message: "Failed to populate with author", success: false });
-    } else {
-      return res.status(201).json({
-        message: "Found posts with author",
-        allPostWithAuthor,
-        success: true,
-      });
-    }
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", success: false });
-  }
-});
-
-// Get all posts with liked users
-app.get("/api/posts/likes", async (req, res) => {
-  try {
-    const allPostWithLikes = await Post.find().populate("likes");
-
-    if (!allPostWithLikes) {
-      return res
-        .status(404)
-        .json({ message: "Failed to populate with author", success: false });
-    }
-
-    return res.status(201).json({
-      message: "Posts with liked authors",
-      allPostWithLikes,
-      success: true,
-    });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", success: false });
-  }
-});
-
-// Get all posts with comments with users
-app.get("/api/posts/comments", async (req, res) => {
-  try {
-    const allPostWithComments = await Post.find().populate("comments");
-
-    if (!allPostWithComments) {
-      return res
-        .status(404)
-        .json({ message: "Failed to populate with author" });
-    }
-
-    return res.status(201).json({
-      message: "Post with comments",
-      allPostWithComments,
-      success: true,
-    });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", success: false });
-  }
-});
-
-// Get all posts with all nested keys populated
-app.get("/allPosts", async (req, res) => {
-  try {
-    const populatedPosts = await Post.find()
+    const profileData = await User.findById(userId)
       .select(
-        "textContent imgContent likes author comments updatedAt createdAt"
+        "name userName email password bio displayPic websiteLink posts following follower bookmarks postsLiked updatedAt createdAt"
       )
-      .populate({
-        path: "author",
-        select: "name",
-      })
-      .populate({
-        path: "comments",
-        populate: {
-          path: "author",
-          select: "name",
-        },
-      });
+      .populate({ path: "bookmarks" })
+      .populate({ path: "follower" })
+      .populate({ path: "following" })
+      .populate({ path: "posts" })
+      .populate({ path: "postsLiked" });
 
-    if (!populatedPosts) {
-      return res
-        .status(404)
-        .json({ message: "Failed to find all details", success: false });
-    } else {
-      return res.status(201).json({
-        message: "Found post with details",
-        populatedPosts,
-        success: true,
-      });
+    if (!profileData) {
+      return res.status(404).json({ message: "cannot find data" });
     }
+
+    return res.status(201).json({ message: "Found data", profileData });
   } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", success: false });
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
