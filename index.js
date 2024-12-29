@@ -26,8 +26,8 @@ app.use(express.json());
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    //const assetsPath = path.resolve(__dirname, "assets");
-    return cb(null, "/tmp");
+    const assetsPath = path.resolve(__dirname, "assets");
+    return cb(null, assetsPath);
   },
 
   filename: function (req, file, cb) {
@@ -398,10 +398,10 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
-// Get users with name and userName only.
+// Get users with name, dp and userName only.
 app.get("/api/users/username", async (req, res) => {
   try {
-    const allUsers = await User.find().select("name userName");
+    const allUsers = await User.find().select("name userName displayPic");
 
     if (!allUsers) {
       return res.status(404).json({
