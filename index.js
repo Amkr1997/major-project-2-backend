@@ -628,7 +628,7 @@ app.get("/get/profile/data/:userId", async (req, res) => {
       .populate({
         path: "bookmarks",
         populate: {
-          path: "bookmarks",
+          path: "author",
           select: "name userName displayPic",
         },
       })
