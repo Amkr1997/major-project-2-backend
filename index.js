@@ -623,12 +623,18 @@ app.get("/get/profile/data/:userId", async (req, res) => {
   try {
     const profileData = await User.findById(userId)
       .select(
-        "name userName email password bio displayPic websiteLink posts following follower bookmarks postsLiked updatedAt createdAt"
+        "name userName email bio displayPic websiteLink posts following follower bookmarks postsLiked updatedAt createdAt"
       )
       .populate({ path: "bookmarks" })
       .populate({ path: "follower" })
       .populate({ path: "following" })
-      .populate({ path: "posts" })
+      .populate({
+        path: "posts",
+        populate: {
+          path: "author",
+          select: "name userName displayPic",
+        },
+      })
       .populate({ path: "postsLiked" });
 
     if (!profileData) {
