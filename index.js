@@ -42,7 +42,10 @@ app.get("/", (req, res) => res.send("Express started!"));
 // Get All Posts
 app.get("/api/posts", async (req, res) => {
   try {
-    const allPosts = await Post.find();
+    const allPosts = await Post.find().populate({
+      path: "author",
+      select: "name userName displayPic",
+    });
 
     if (!allPosts) {
       return res
